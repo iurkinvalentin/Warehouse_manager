@@ -1,0 +1,92 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# SQLite database (если используется)
+*.sqlite3
+
+# dotenv - файлы с переменными окружения
+.env
+
+# Virtual environments
+venv
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE и редакторы
+.vscode/
+.idea/
+
+# PyCharm
+*.iml
+
+# mypy
+.mypy_cache/
+
+# FastAPI лог файлы (если есть)
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Скрытые файлы Git (не обязательно, но можно исключить)
+.git/
+
+# Swap файлы редакторов
+*.swp
