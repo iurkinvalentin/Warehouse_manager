@@ -5,7 +5,7 @@ from app.models.warehouse import Product, Warehouse, Category
 from app.models.user import User
 from app.services import filter_service
 from app.schemas.warehouse import ProductCreate, ProductUpdate, ProductMove
-from app.services.utils import QueryParams
+from app.schemas.utils import QueryParams
 
 
 def create_product(
@@ -44,12 +44,9 @@ def get_products(db: Session, query_params: QueryParams):
     """Получение списка товаров с фильтрацией, сортировкой и пагинацией"""
     try:
         query = db.query(Product)
-        print(f"📌 Полученные параметры фильтрации: {query_params.filter}")
         query = filter_service.apply_filters(query, Product, query_params.parse_filter())
         query = filter_service.apply_sorting(query, Product, query_params.parse_sort())
         query = filter_service.apply_range(query, query_params.parse_range())
-        print(f"📦 Итоговый список товаров после фильтрации: {query.all()}")
-        print(f"🔎 SQL Query: {str(query)}")
         return query.all()
     except SQLAlchemyError as e:
         raise HTTPException(

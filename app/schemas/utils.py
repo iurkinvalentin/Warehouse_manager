@@ -6,13 +6,13 @@ import json
 class QueryParams(BaseModel):
     filter: Optional[str] = Field(default=None, alias="filter")
     sort: Optional[str] = Field(default=None, alias="sort")
-    range: Optional[str] = Field(default=None, alias="range")  # ✅ Теперь `range` как строка
+    range: Optional[str] = Field(default=None, alias="range")
 
     def parse_sort(self) -> List[Dict[str, str]]:
         """Преобразует `sort` из строки в список"""
         if isinstance(self.sort, str):
             try:
-                return json.loads(self.sort)  # ✅ Преобразуем JSON-строку в Python-список
+                return json.loads(self.sort)
             except json.JSONDecodeError:
                 return []
         return self.sort or []
@@ -21,7 +21,7 @@ class QueryParams(BaseModel):
         """Преобразует `filter` из строки в словарь"""
         if isinstance(self.filter, str):
             try:
-                return json.loads(self.filter)  # ✅ Преобразуем JSON-строку в словарь
+                return json.loads(self.filter)
             except json.JSONDecodeError:
                 return {}
         return self.filter or {}
@@ -30,7 +30,7 @@ class QueryParams(BaseModel):
         """Преобразует `range` из строки в словарь"""
         if isinstance(self.range, str):
             try:
-                return json.loads(self.range)  # ✅ Преобразуем JSON-строку в словарь
+                return json.loads(self.range)
             except json.JSONDecodeError:
                 return {}
         return self.range or {}

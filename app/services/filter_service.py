@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Query, Session
 from sqlalchemy import and_, or_
 from typing import Dict, Any, List, Type
-from app.services.utils import QueryParams
+from app.schemas.utils import QueryParams
 
 
 DEFAULT_LIMIT = 100
 
 
 def apply_filters(query: Query, model, filters: Dict[str, Any]) -> Query:
+    """ Применяет фильтры к SQLAlchemy-запросу """
     if not filters:
         return query
 
@@ -58,24 +59,21 @@ def apply_sorting(query: Query, model, sorting: List[Dict[str, str]]) -> Query:
         order = sort_param.get("order", "ASC").upper()
 
         if not field:
-            raise ValueError("❌ Поле `field` обязательно для сортировки!")
+            raise ValueError(" Поле `field` обязательно для сортировки!")
 
         column = getattr(model, field, None)
         if not column:
-            raise ValueError(f"❌ Поле `{field}` не найдено в модели `{model.__name__}`")
+            raise ValueError(f" Поле `{field}` не найдено в модели `{model.__name__}`")
 
         if order not in ["ASC", "DESC"]:
-            raise ValueError(f"❌ Неверное значение `order`: {order}. Ожидается 'ASC' или 'DESC'.")
+            raise ValueError(f" Неверное значение `order`: {order}. Ожидается 'ASC' или 'DESC'.")
 
         order_by_clauses.append(column.asc() if order == "ASC" else column.desc())
 
-    # Применяем сортировку сразу по всем переданным полям
     query = query.order_by(*order_by_clauses)
 
     print(f"✅ Итоговый SQL-запрос с сортировкой: {str(query)}")
     return query
-
-
 
 
 def apply_range(query: Query, range_params: Dict[str, int]) -> Query:
