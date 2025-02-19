@@ -56,6 +56,15 @@ SECRET_KEY=your_secret_key
 docker-compose up -d
 ```
 
+### Создание базы данных
+```bash
+docker exec -it fastapi_app bash
+python -c "from app.data.database import init_db; init_db()"
+rm alembic/versions/*.py
+alembic revision --autogenerate -m "Initial tables"
+alembic upgrade head
+```
+
 ### 5. Применение миграций
 ```bash
 alembic upgrade head
