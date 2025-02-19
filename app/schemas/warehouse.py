@@ -99,7 +99,6 @@ class ProductResponse(BaseModel):
 
 class ProductMove(BaseModel):
     """Перемещение товара между складами"""
-    source_warehouse_id: int
     destination_warehouse_id: int
 
 

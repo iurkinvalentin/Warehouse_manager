@@ -12,7 +12,7 @@ class Warehouse(Base):
     __tablename__ = 'warehouses'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     address = Column(String, nullable=False)
     description = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -26,7 +26,7 @@ class Category(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     is_active = Column(Boolean, default=True)
 
     products = relationship(
@@ -38,7 +38,7 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     category_id = Column(Integer, ForeignKey("categories.id"))
     warehouse_id = Column(Integer, ForeignKey("warehouses.id"))
     quantity = Column(Integer, nullable=False, default=0)
@@ -58,6 +58,6 @@ class Attribute(Base):
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     value = Column(String, nullable=False)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"))

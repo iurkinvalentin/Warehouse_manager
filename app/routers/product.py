@@ -7,6 +7,8 @@ from app.schemas.warehouse import (
     ProductCreate, ProductResponse, ProductUpdate, ProductMove)
 from app.services.user_service import get_current_user
 from typing import List
+from app.services.utils import QueryParams
+from app.services import utils  
 
 
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -18,11 +20,14 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db),
     return product_service.create_product(product, db, current_user)
 
 
+@router.get("", response_model=List[ProductResponse])
 @router.get("/", response_model=List[ProductResponse])
-def get_products(skip: int = 0,
-                 limit: int = 100, db: Session = Depends(get_db),
-                 current_user: dict = Depends(get_current_user)):
-    return product_service.get_products(skip, limit, db)
+def get_products(
+    query_params: utils.QueryParams = Depends(),  # ✅ Убрали вызов класса
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Если авторизация нужна
+):
+    return product_service.get_products(db, query_params)
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

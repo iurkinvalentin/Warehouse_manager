@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from app.models.warehouse import Product, Warehouse, Category
 from app.models.user import User
+from app.services import filter_service
 from app.schemas.warehouse import ProductCreate, ProductUpdate, ProductMove
+from app.services.utils import QueryParams
 
 
 def create_product(
@@ -38,10 +40,17 @@ def create_product(
         )
 
 
-def get_products(skip: int, limit: int, db: Session):
-    """Получение списка товаров с пагинацией"""
+def get_products(db: Session, query_params: QueryParams):
+    """Получение списка товаров с фильтрацией, сортировкой и пагинацией"""
     try:
-        return db.query(Product).offset(skip).limit(limit).all()
+        query = db.query(Product)
+        print(f"📌 Полученные параметры фильтрации: {query_params.filter}")
+        query = filter_service.apply_filters(query, Product, query_params.parse_filter())
+        query = filter_service.apply_sorting(query, Product, query_params.parse_sort())
+        query = filter_service.apply_range(query, query_params.parse_range())
+        print(f"📦 Итоговый список товаров после фильтрации: {query.all()}")
+        print(f"🔎 SQL Query: {str(query)}")
+        return query.all()
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=500, detail=f"Ошибка чтения базы данных: {str(e)}"
@@ -94,31 +103,14 @@ def delete_product(product_id: int, db: Session):
 
 def move_product(product_id: int, move_data: ProductMove, db: Session, current_user: User):
     """Перемещение товара между складами с обновлением updated_by."""
-    
     product = db.query(Product).filter_by(id=product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Товар не найден")
-
-    source_warehouse = db.query(Warehouse).filter_by(id=move_data.source_warehouse_id).first()
-    if not source_warehouse:
-        raise HTTPException(status_code=404, detail="Исходный склад не найден")
-
     destination_warehouse = db.query(Warehouse).filter_by(id=move_data.destination_warehouse_id).first()
     if not destination_warehouse:
         raise HTTPException(status_code=404, detail="Целевой склад не найден")
-
-    if product.warehouse_id != move_data.source_warehouse_id:
-        raise HTTPException(status_code=400, detail="Товар не находится на указанном складе")
-
-    # Обновляем склад у товара
     product.warehouse_id = move_data.destination_warehouse_id
-
-    # Фиксируем, кто переместил товар
     product.updated_by = current_user.id
-
-
     db.commit()
     db.refresh(product)
-    return {"detail": f"Товар {product.name} перемещен на склад {destination_warehouse.name}"}
-
-
+    return product
