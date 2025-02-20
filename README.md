@@ -26,7 +26,7 @@
 ## Установка и запуск проекта
 ### 1. Клонирование репозитория
 ```bash
-git clone https://github.com/yourusername/warehouse_manager.git
+git clone https://github.com/iurkinvalentin/warehouse_manager.git
 cd warehouse_manager
 ```
 
