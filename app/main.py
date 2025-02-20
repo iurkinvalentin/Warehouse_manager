@@ -1,10 +1,11 @@
 from fastapi import FastAPI
-from app.routers import product, warehouse, category, attribute, auth
+
+from app.routers import attribute, auth, category, product, warehouse
 
 app = FastAPI(
-    title='warehouse_manager',
-    description='система управления складами',
-    version='0.1'
+    title="warehouse_manager",
+    description="система управления складами",
+    version="0.1"
 )
 
 app.include_router(auth.router)

@@ -1,9 +1,11 @@
 import os
 import sys
 from logging.config import fileConfig
-from sqlalchemy import create_engine, pool
-from alembic import context
+
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, pool
+
+from alembic import context
 
 load_dotenv()
 
@@ -12,8 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.models.base import Base
 from app.models.user import User
-from app.models.warehouse import Warehouse, Category, Attribute, Product
-
+from app.models.warehouse import Attribute, Category, Product, Warehouse
 
 target_metadata = Base.metadata
 
@@ -29,8 +30,11 @@ config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 def run_migrations_offline():
     context.configure(
-        url=DATABASE_URL, target_metadata=target_metadata,
-        literal_binds=True, compare_type=True)
+        url=DATABASE_URL,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        compare_type=True,
+    )
     with context.begin_transaction():
         context.run_migrations()
 
@@ -39,8 +43,8 @@ def run_migrations_online():
     connectable = create_engine(DATABASE_URL, poolclass=pool.NullPool)
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata,
-            compare_type=True)
+            connection=connection, target_metadata=target_metadata, compare_type=True
+        )
         with context.begin_transaction():
             context.run_migrations()
 

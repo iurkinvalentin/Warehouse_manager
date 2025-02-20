@@ -1,11 +1,13 @@
 from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.services import user_service
-from app.schemas.users import UserRead, UserCreate, UserInDB, Token, UserResponse
-from app.data.database import get_db
 
+from app.data.database import get_db
+from app.schemas.users import (
+    Token, UserCreate, UserInDB, UserRead, UserResponse)
+from app.services import user_service
 
 router = APIRouter()
 
@@ -34,26 +36,25 @@ async def login_for_access_token(
 
 @router.get("/users/me", response_model=UserResponse)
 async def read_users_me(
-    current_user: UserRead = Depends(user_service.get_current_user)
+    current_user: UserRead = Depends(user_service.get_current_user),
 ):
     return current_user
 
 
-@router.post('/register/', response_model=UserResponse)
+@router.post("/register/", response_model=UserResponse)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return user_service.register_handler(user_data, db)
 
 
-@router.delete('/users/{user_id}')
+@router.delete("/users/{user_id}")
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: UserInDB = Depends(user_service.get_current_user)
+    current_user: UserInDB = Depends(user_service.get_current_user),
 ):
     if not current_user.id or current_user.id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Нельзя удалить другого пользователя"
+            detail="Нельзя удалить другого пользователя",
         )
     return user_service.delete_user_handler(user_id, db)
-

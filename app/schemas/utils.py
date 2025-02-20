@@ -1,9 +1,12 @@
-from pydantic import BaseModel, Field
-from typing import Dict, Any, List, Optional
 import json
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class QueryParams(BaseModel):
+    """Модель для обработки параметров запроса API."""
+
     filter: Optional[str] = Field(default=None, alias="filter")
     sort: Optional[str] = Field(default=None, alias="sort")
     range: Optional[str] = Field(default=None, alias="range")
@@ -16,7 +19,7 @@ class QueryParams(BaseModel):
             except json.JSONDecodeError:
                 return []
         return self.sort or []
-    
+
     def parse_filter(self) -> Dict[str, Any]:
         """Преобразует `filter` из строки в словарь"""
         if isinstance(self.filter, str):

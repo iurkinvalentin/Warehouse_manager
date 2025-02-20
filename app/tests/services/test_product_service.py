@@ -1,36 +1,42 @@
-import pytest
 from unittest.mock import MagicMock
-from sqlalchemy.exc import IntegrityError
+import pytest
 from fastapi import HTTPException
-from app.services.product_service import (
-    create_product, get_products, get_product,
-    update_product, delete_product, move_product
-)
-from app.models.warehouse import Product, Warehouse, Category
+from sqlalchemy.exc import IntegrityError
+
 from app.models.user import User
-from app.schemas.warehouse import ProductCreate, ProductUpdate, ProductMove
+from app.models.warehouse import Category, Product, Warehouse
 from app.schemas.utils import QueryParams
+from app.schemas.warehouse import ProductCreate, ProductMove, ProductUpdate
+from app.services.product_service import (
+    create_product,
+    delete_product,
+    get_product,
+    get_products,
+    move_product,
+    update_product,
+)
 
 
 @pytest.fixture
 def mock_db():
-    """Создает мокнутую сессию SQLAlchemy"""
     return MagicMock()
 
 
 @pytest.fixture
 def mock_user():
-    """Создает тестового пользователя"""
     return User(id=1, username="test_user")
 
 
 def test_create_product_success(mock_db, mock_user):
-    """Успешное создание товара"""
-    product_data = ProductCreate(name="Test Product", category_id=1, warehouse_id=1, quantity=10)
+    product_data = ProductCreate(
+        name="Test Product", category_id=1, warehouse_id=1, quantity=10)
 
-    mock_db.query().filter_by().first.side_effect = [Category(id=1, name="Electronics"), Warehouse(id=1, name="WH1")]
-    mock_db.commit.return_value = None
-    mock_db.refresh.return_value = None
+    mock_db.query().filter_by().first.side_effect = [
+        Category(id=1, name="Electronics"),
+        Warehouse(id=1, name="WH1"),
+    ]
+    mock_db.refresh.side_effect = lambda x: x.__dict__.update(
+        {"name": "Test Product", "quantity": 10, "created_by": mock_user.id})
 
     result = create_product(product_data, mock_db, mock_user)
 
@@ -38,13 +44,15 @@ def test_create_product_success(mock_db, mock_user):
     assert result.quantity == 10
     assert result.created_by == mock_user.id
     mock_db.add.assert_called_once()
+    mock_db.commit.assert_called_once()
 
 
 def test_create_product_category_not_found(mock_db, mock_user):
-    """Ошибка: Категория не найдена"""
-    product_data = ProductCreate(name="Test Product", category_id=1, warehouse_id=1, quantity=10)
+    product_data = ProductCreate(
+        name="Test Product", category_id=1, warehouse_id=1, quantity=10)
 
-    mock_db.query().filter_by().first.side_effect = [None, Warehouse(id=1, name="WH1")]
+    mock_db.query().filter_by().first.side_effect = [None, Warehouse(
+        id=1, name="WH1")]
 
     with pytest.raises(HTTPException) as exc_info:
         create_product(product_data, mock_db, mock_user)
@@ -54,10 +62,11 @@ def test_create_product_category_not_found(mock_db, mock_user):
 
 
 def test_create_product_warehouse_not_found(mock_db, mock_user):
-    """Ошибка: Склад не найден"""
-    product_data = ProductCreate(name="Test Product", category_id=1, warehouse_id=1, quantity=10)
+    product_data = ProductCreate(
+        name="Test Product", category_id=1, warehouse_id=1, quantity=10)
 
-    mock_db.query().filter_by().first.side_effect = [Category(id=1, name="Electronics"), None]
+    mock_db.query().filter_by().first.side_effect = [Category(
+        id=1, name="Electronics"), None]
 
     with pytest.raises(HTTPException) as exc_info:
         create_product(product_data, mock_db, mock_user)
@@ -67,10 +76,11 @@ def test_create_product_warehouse_not_found(mock_db, mock_user):
 
 
 def test_create_product_integrity_error(mock_db, mock_user):
-    """Ошибка: Продукт с таким именем уже существует (IntegrityError)"""
-    product_data = ProductCreate(name="Test Product", category_id=1, warehouse_id=1, quantity=10)
+    product_data = ProductCreate(
+        name="Test Product", category_id=1, warehouse_id=1, quantity=10)
 
-    mock_db.query().filter_by().first.side_effect = [Category(id=1, name="Electronics"), Warehouse(id=1, name="WH1")]
+    mock_db.query().filter_by().first.side_effect = [Category(
+        id=1, name="Electronics"), Warehouse(id=1, name="WH1")]
     mock_db.commit.side_effect = IntegrityError("IntegrityError", {}, None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -81,11 +91,13 @@ def test_create_product_integrity_error(mock_db, mock_user):
 
 
 def test_get_products(mock_db):
-    """Получение списка товаров"""
-    mock_db.query().all.return_value = [
+    products = [
         Product(id=1, name="Product1", quantity=5),
         Product(id=2, name="Product2", quantity=8),
     ]
+    mock_query = MagicMock()
+    mock_query.all.return_value = products
+    mock_db.query.return_value = mock_query
 
     query_params = QueryParams()
     result = get_products(mock_db, query_params)
@@ -93,11 +105,10 @@ def test_get_products(mock_db):
     assert len(result) == 2
     assert result[0].name == "Product1"
     assert result[1].name == "Product2"
-    mock_db.query().all.assert_called_once()
+    mock_query.all.assert_called_once()
 
 
 def test_get_product_found(mock_db):
-    """Получение товара по ID (успешно)"""
     product = Product(id=1, name="Test Product", quantity=10)
     mock_db.query().filter_by().first.return_value = product
 
@@ -109,7 +120,6 @@ def test_get_product_found(mock_db):
 
 
 def test_get_product_not_found(mock_db):
-    """Ошибка: Товар не найден"""
     mock_db.query().filter_by().first.return_value = None
 
     with pytest.raises(HTTPException) as exc_info:
@@ -120,7 +130,6 @@ def test_get_product_not_found(mock_db):
 
 
 def test_update_product_success(mock_db, mock_user):
-    """Успешное обновление товара"""
     product = Product(id=1, name="Test Product", quantity=10)
     mock_db.query().filter_by().first.return_value = product
 
@@ -129,12 +138,12 @@ def test_update_product_success(mock_db, mock_user):
 
     assert result.name == "Updated Product"
     assert result.quantity == 20
-    assert result.updated_by == mock_user.id
+    assert product.name == "Updated Product"
+    assert product.updated_by == mock_user.id
     mock_db.commit.assert_called_once()
 
 
 def test_update_product_not_found(mock_db, mock_user):
-    """Ошибка: Обновление несуществующего товара"""
     mock_db.query().filter_by().first.return_value = None
 
     with pytest.raises(HTTPException) as exc_info:
@@ -145,7 +154,6 @@ def test_update_product_not_found(mock_db, mock_user):
 
 
 def test_delete_product_success(mock_db):
-    """Успешное удаление товара"""
     product = Product(id=1, name="Test Product", quantity=10)
     mock_db.query().filter_by().first.return_value = product
 
@@ -157,7 +165,6 @@ def test_delete_product_success(mock_db):
 
 
 def test_delete_product_not_found(mock_db):
-    """Ошибка: Удаление несуществующего товара"""
     mock_db.query().filter_by().first.return_value = None
 
     with pytest.raises(HTTPException) as exc_info:
@@ -168,7 +175,6 @@ def test_delete_product_not_found(mock_db):
 
 
 def test_move_product_success(mock_db, mock_user):
-    """Успешное перемещение товара на другой склад"""
     product = Product(id=1, name="Test Product", quantity=10, warehouse_id=1)
     new_warehouse = Warehouse(id=2, name="WH2")
 
@@ -178,12 +184,12 @@ def test_move_product_success(mock_db, mock_user):
     result = move_product(1, move_data, mock_db, mock_user)
 
     assert result.warehouse_id == 2
-    assert result.updated_by == mock_user.id
+    assert product.warehouse_id == 2
+    assert product.updated_by == mock_user.id
     mock_db.commit.assert_called_once()
 
 
 def test_move_product_warehouse_not_found(mock_db, mock_user):
-    """Ошибка: Целевой склад не найден"""
     product = Product(id=1, name="Test Product", quantity=10, warehouse_id=1)
     mock_db.query().filter_by().first.side_effect = [product, None]
 

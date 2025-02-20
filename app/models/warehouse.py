@@ -1,15 +1,15 @@
-from sqlalchemy import (
-    Column, Integer, String,
-    Boolean, ForeignKey, DateTime
-)
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
 from app.models.base import Base
 
 
 class Warehouse(Base):
     """Склад"""
-    __tablename__ = 'warehouses'
+
+    __tablename__ = "warehouses"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
@@ -18,11 +18,13 @@ class Warehouse(Base):
     is_active = Column(Boolean, default=True)
 
     products = relationship(
-        "Product", backref="warehouse", cascade="all, delete-orphan")
+        "Product", backref="warehouse", cascade="all, delete-orphan"
+    )
 
 
 class Category(Base):
     """Категория товара"""
+
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -35,6 +37,7 @@ class Category(Base):
 
 class Product(Base):
     """Товар"""
+
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -46,15 +49,17 @@ class Product(Base):
     created_by = Column(Integer, ForeignKey("users.id"))
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow,
-                        onupdate=datetime.utcnow)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     attributes = relationship(
-        "Attribute", backref="product", cascade="all, delete-orphan")
+        "Attribute", backref="product", cascade="all, delete-orphan"
+    )
 
 
 class Attribute(Base):
     """Характеристика товара"""
+
     __tablename__ = "attributes"
 
     id = Column(Integer, primary_key=True, index=True)

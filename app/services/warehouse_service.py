@@ -1,6 +1,7 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from app.models.warehouse import Warehouse
 from app.schemas.warehouse import WarehouseCreate, WarehouseUpdate
 
@@ -22,7 +23,7 @@ def create_warehouse(warehouse_data: WarehouseCreate, db: Session):
         db.rollback()
         raise HTTPException(
             status_code=500, detail=f"Ошибка базы данных: {str(e)}"
-        )
+            )
 
 
 def get_warehouses(skip: int, limit: int, db: Session):
@@ -43,8 +44,8 @@ def get_warehouse(warehouse_id: int, db: Session):
     return warehouse
 
 
-def update_warehouse(warehouse_id: int,
-                     warehouse_data: WarehouseUpdate, db: Session):
+def update_warehouse(
+        warehouse_id: int, warehouse_data: WarehouseUpdate, db: Session):
     """Обновление данных склада"""
     warehouse = db.query(Warehouse).filter_by(id=warehouse_id).first()
     if not warehouse:

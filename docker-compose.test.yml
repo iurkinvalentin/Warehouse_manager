@@ -1,40 +1,40 @@
 version: "3.8"
 
 services:
-  app:
+  test:
     build: .
-    container_name: warehouse_app
-    ports:
-      - "8000:8000"
+    container_name: warehouse_tests
+    command: ["pytest", "--disable-warnings"]
     depends_on:
-      db:
+      test_db:
         condition: service_healthy
     env_file:
-      - .env
+      - .env.test
     environment:
-      DB_HOST: db
+      DB_HOST: test_db
     volumes:
       - .:/app
-    restart: always
+    working_dir: /app
+    restart: "no"
 
-  db:
+  test_db:
     image: postgres:15
-    container_name: warehouse_db
+    container_name: warehouse_test_db
     env_file:
-      - .env
+      - .env.test
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_test:/var/lib/postgresql/data
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER} -d ${DB_NAME}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 3
     environment:
       POSTGRES_USER: ${POSTGRES_SUPERUSER}
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
 
 volumes:
-  pgdata:
+  pgdata_test:

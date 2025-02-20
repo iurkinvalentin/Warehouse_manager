@@ -1,21 +1,21 @@
+from typing import Any, Dict, List, Type
 from sqlalchemy.orm import Query, Session
-from sqlalchemy import and_, or_
-from typing import Dict, Any, List, Type
-from app.schemas.utils import QueryParams
 
+from app.schemas.utils import QueryParams
 
 DEFAULT_LIMIT = 100
 
 
 def apply_filters(query: Query, model, filters: Dict[str, Any]) -> Query:
-    """ Применяет фильтры к SQLAlchemy-запросу """
+    """Применяет фильтры к SQLAlchemy-запросу"""
     if not filters:
         return query
 
     for field, condition in filters.items():
         column = getattr(model, field, None)
         if not column:
-            raise ValueError(f"Field '{field}' not found in model {model.__name__}")
+            raise ValueError(
+                f"Field '{field}' not found in model {model.__name__}")
 
         for operator, value in condition.items():
             if operator == "NOT":
@@ -26,11 +26,14 @@ def apply_filters(query: Query, model, filters: Dict[str, Any]) -> Query:
                 query = query.filter(column == value)
             elif operator == "IN":
                 if not isinstance(value, list):
-                    raise ValueError(f"Value for IN must be a list, got {type(value)}")
+                    raise ValueError(
+                        f"Value for IN must be a list, got {type(value)}")
                 query = query.filter(column.in_(value))
             elif operator == "NOT IN":
                 if not isinstance(value, list):
-                    raise ValueError(f"Value for NOT IN must be a list, got {type(value)}")
+                    raise ValueError(
+                        f"Value for NOT IN must be a list, got {type(value)}"
+                    )
                 query = query.filter(~column.in_(value))
             elif operator in ["GE", "GTE"]:
                 query = query.filter(column >= value)
@@ -51,7 +54,7 @@ def apply_sorting(query: Query, model, sorting: List[Dict[str, str]]) -> Query:
         return query
 
     print(f"🛠 Применяем сортировку: {sorting}")
-    
+
     order_by_clauses = []
 
     for sort_param in sorting:
@@ -63,12 +66,17 @@ def apply_sorting(query: Query, model, sorting: List[Dict[str, str]]) -> Query:
 
         column = getattr(model, field, None)
         if not column:
-            raise ValueError(f" Поле `{field}` не найдено в модели `{model.__name__}`")
+            raise ValueError(
+                f" Поле `{field}` не найдено в модели `{model.__name__}`")
 
         if order not in ["ASC", "DESC"]:
-            raise ValueError(f" Неверное значение `order`: {order}. Ожидается 'ASC' или 'DESC'.")
+            raise ValueError(
+                f" Неверное значение `order`: "
+                f"{order}. Ожидается 'ASC' или 'DESC'."
+            )
 
-        order_by_clauses.append(column.asc() if order == "ASC" else column.desc())
+        order_by_clauses.append(
+            column.asc() if order == "ASC" else column.desc())
 
     query = query.order_by(*order_by_clauses)
 

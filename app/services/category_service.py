@@ -1,6 +1,7 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from app.models.warehouse import Category
 from app.schemas.warehouse import CategoryCreate, CategoryUpdate
 
@@ -9,9 +10,14 @@ def create_category(category_data: CategoryCreate, db: Session):
     """Создание новой категории с проверкой на дубликат"""
     try:
         # Проверяем, существует ли уже такая категория
-        existing_category = db.query(Category).filter_by(name=category_data.name).first()
+        existing_category = (
+            db.query(Category).filter_by(name=category_data.name).first()
+        )
         if existing_category:
-            raise HTTPException(status_code=400, detail="Категория с таким именем уже существует")
+            raise HTTPException(
+                status_code=400,
+                detail="Категория с таким именем уже существует"
+            )
 
         # Создаём новую категорию
         db_category = Category(**category_data.dict())
@@ -22,8 +28,8 @@ def create_category(category_data: CategoryCreate, db: Session):
 
     except SQLAlchemyError as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Ошибка базы данных: {str(e)}")
-
+        raise HTTPException(
+            status_code=500, detail=f"Ошибка базы данных: {str(e)}")
 
 
 def get_categories(skip: int, limit: int, db: Session):
@@ -44,8 +50,8 @@ def get_category(category_id: int, db: Session):
     return category
 
 
-def update_category(category_id: int,
-                    category_data: CategoryUpdate, db: Session):
+def update_category(
+        category_id: int, category_data: CategoryUpdate, db: Session):
     """Обновление данных категории"""
     category = db.query(Category).filter_by(id=category_id).first()
     if not category:
@@ -64,7 +70,7 @@ def update_category(category_id: int,
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail=f"Конфликт данных при обновлении категории: {str(e)}"
+            detail=f"Конфликт данных при обновлении категории: {str(e)}",
         )
     except SQLAlchemyError as e:
         db.rollback()

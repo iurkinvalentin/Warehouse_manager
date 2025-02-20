@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String
-from app.models.base import Base
 from sqlalchemy.orm import relationship
+
+from app.models.base import Base
 
 
 class User(Base):
     """Пользователь"""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -20,12 +22,12 @@ class User(Base):
         "Product",
         backref="creator",
         foreign_keys="[Product.created_by]",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     updated_products = relationship(
         "Product",
         backref="updator",
         foreign_keys="[Product.updated_by]",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )

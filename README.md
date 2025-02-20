@@ -42,13 +42,14 @@ pip install -r requirements.txt
 Создайте файл `.env` в корневой директории и добавьте туда переменные:
 ```env
 DB_NAME=warehouse_db
-DB_USER=warehouse_user
-DB_PASSWORD=yourpassword
-DB_HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=password
+DB_HOST=warehouse_db
 DB_PORT=5432
 POSTGRES_SUPERUSER=postgres
-POSTGRES_SUPERUSER_PASSWORD=your_superuser_password
-SECRET_KEY=your_secret_key
+POSTGRES_SUPERUSER_PASSWORD=password
+DATABASE_URL=postgresql://postgres:password@warehouse_db:5432/warehouse_db
+SECRET_KEY=default-secret-key
 ```
 
 ### 4. Запуск базы данных (если используется Docker)
@@ -56,23 +57,23 @@ SECRET_KEY=your_secret_key
 docker-compose up -d
 ```
 
-### Создание базы данных
+### Создание базы данных и Применение миграций
 ```bash
-docker exec -it fastapi_app bash
+docker exec -it warehouse_app bash
 python -c "from app.data.database import init_db; init_db()"
-rm alembic/versions/*.py
+alembic stamp head
 alembic revision --autogenerate -m "Initial tables"
-alembic upgrade head
-```
-
-### 5. Применение миграций
-```bash
 alembic upgrade head
 ```
 
 ### 6. Запуск приложения
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 7. Запуск unit тестов
+```bash
+docker compose -f docker-compose.test.yml run --build --rm test
 ```
 
 Приложение будет доступно по адресу: [http://localhost:8000](http://localhost:8000)

@@ -1,19 +1,23 @@
+import os
 from datetime import datetime, timedelta
-from typing import Union, Optional
+from typing import Optional, Union
+
 from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+
+from app.data.database import get_db
 from app.models.user import User
-from app.schemas.users import UserInDB
-from fastapi.security import OAuth2PasswordBearer
-from app.schemas.users import TokenData
-from app.data.database import SessionLocal, get_db
+from app.schemas.users import TokenData, UserInDB
+from dotenv import load_dotenv
 
+load_dotenv()
 
-SECRET_KEY = "your-secret-key"
+SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -21,15 +25,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Проверка пароля."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
+    """Хеширование пароля."""
     return pwd_context.hash(password)
 
 
 def create_access_token(
         data: dict, expires_delta: Union[timedelta, None] = None):
+    """Создание токена."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -41,16 +48,18 @@ def create_access_token(
 
 
 def get_user(db: Session, username: str) -> Optional[UserInDB]:
-    user = db.query(User).filter(
-        User.username == username).first()
+    """Получение пользователя."""
+    user = db.query(User).filter(User.username == username).first()
     if user:
         return UserInDB(
             id=user.id, username=user.username,
-            hashed_password=user.hashed_password)
+            hashed_password=user.hashed_password
+        )
     return None
 
 
 def authenticate_user(db: Session, username: str, password: str):
+    """Аутентификация пользователя."""
     user = get_user(db, username)
     if not user:
         return False
@@ -62,6 +71,7 @@ def authenticate_user(db: Session, username: str, password: str):
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
+    """Получение текущего пользователя."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Невозможно проверить учетные данные",
@@ -82,18 +92,17 @@ async def get_current_user(
 
 
 def register_handler(user_data, db: Session):
+    """Регистрация пользователя."""
     existing_user = db.query(User).filter(
         User.username == user_data.username).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Пользователь с таким именем уже существует"
+            detail="Пользователь с таким именем уже существует",
         )
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
-        username=user_data.username,
-        hashed_password=hashed_password
-    )
+        username=user_data.username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -101,9 +110,10 @@ def register_handler(user_data, db: Session):
 
 
 def delete_user_handler(user_id, db: Session):
+    """Удаление пользователя."""
     existing_user = db.query(User).filter(User.id == user_id).first()
     if not existing_user:
-        raise HTTPException(status_code=404, detail='Пользователь не найден')
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
     db.delete(existing_user)
     db.commit()
     return {"detail": "Пользователь успешно удалён"}
