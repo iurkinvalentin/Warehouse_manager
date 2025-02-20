@@ -1,3 +1,4 @@
+from typing import List
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,8 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.data.database import get_db
 from app.schemas.users import (
-    Token, UserCreate, UserInDB, UserRead, UserResponse)
+    Token, UserCreate, UserInDB, UserRead, UserResponse, UserUpdate)
 from app.services import user_service
+
 
 router = APIRouter()
 
@@ -41,9 +43,27 @@ async def read_users_me(
     return current_user
 
 
+@router.get("/users/", response_model=List[UserResponse])
+def get_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(user_service.get_current_user),
+):
+    return user_service.get_all_users(skip, limit, db)
+
+
 @router.post("/register/", response_model=UserResponse)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return user_service.register_handler(user_data, db)
+
+
+@router.patch("/users/{user_id}")
+def patch_user(user_id: int, user_data: UserUpdate,
+               db: Session = Depends(get_db),
+               current_user: UserInDB = Depends(
+                   user_service.get_current_user)):
+    return user_service.update_user_handler(user_id, user_data, db)
 
 
 @router.delete("/users/{user_id}")

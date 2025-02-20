@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.data.database import get_db
 from app.models.user import User
@@ -68,6 +69,16 @@ def authenticate_user(db: Session, username: str, password: str):
     return user
 
 
+def get_all_users(skip: int, limit: int, db: Session):
+    """Получение списка пользователей с пагинацией"""
+    try:
+        return db.query(User).offset(skip).limit(limit).all()
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500, detail=f"Ошибка чтения базы данных: {str(e)}"
+        )
+
+
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
@@ -98,7 +109,7 @@ def register_handler(user_data, db: Session):
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Пользователь с таким именем уже существует",
+            detail="Такое имя пользователя уже существует",
         )
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
@@ -107,6 +118,23 @@ def register_handler(user_data, db: Session):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+
+def update_user_handler(user_id: int, user_data, db: Session):
+    """Обновление данных пользователя."""
+    existing_user = db.query(User).filter(User.id == user_id).first()
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    for key, value in user_data.dict(exclude_unset=True).items():
+        if hasattr(existing_user, key):
+            setattr(existing_user, key, value)
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"Поле '{key}' не существует"
+                )
+    db.commit()
+    db.refresh(existing_user)
+    return existing_user
 
 
 def delete_user_handler(user_id, db: Session):
