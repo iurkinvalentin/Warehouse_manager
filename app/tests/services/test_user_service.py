@@ -127,7 +127,9 @@ async def test_get_current_user_invalid_token(mock_jwt_decode, mock_db):
 
 
 def test_register_handler_success(mock_db):
-    user_data = UserCreate(username="newuser", password="password123")
+    user_data = UserCreate(
+        username="newuser", password="password123",
+        email="test@example.com")
     mock_db.query().filter().first.return_value = None
 
     mock_user = MagicMock()
@@ -144,7 +146,9 @@ def test_register_handler_success(mock_db):
 
 
 def test_register_handler_user_already_exists(mock_db):
-    user_data = UserCreate(username="existinguser", password="password123")
+    user_data = UserCreate(
+        username="existinguser", password="password123",
+        email="test@example.com")
     mock_db.query().filter().first.return_value = User(
         id=1, username="existinguser")
 
@@ -152,7 +156,7 @@ def test_register_handler_user_already_exists(mock_db):
         register_handler(user_data, mock_db)
 
     assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
-    assert "Пользователь с таким именем уже существует" in (
+    assert "Такое имя пользователя уже существует" in (
         exc_info.value.detail)
 
 

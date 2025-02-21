@@ -32,7 +32,7 @@ cd warehouse_manager
 
 ### 2. Создание виртуального окружения и установка зависимостей
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # для Linux/macOS
 venv\Scripts\activate    # для Windows
 pip install -r requirements.txt
@@ -57,13 +57,18 @@ SECRET_KEY=default-secret-key
 docker-compose up -d
 ```
 
-### Создание базы данных и Применение миграций
+### 5. Создание базы данных и Применение миграций
 ```bash
 docker exec -it warehouse_app bash
 python -c "from app.data.database import init_db; init_db()"
 alembic stamp head
 alembic revision --autogenerate -m "Initial tables"
 alembic upgrade head
+```
+
+### 5.1 Тестовые данные для базы данных
+```bash
+python seed.db.py
 ```
 
 ### 6. Запуск приложения
@@ -73,19 +78,13 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 ### 7. Запуск unit тестов
 ```bash
-docker compose -f docker-compose.test.yml run --build --rm test
+pytest
+docker compose -f docker-compose.test.yml run --build --rm test #вне контейнера
 ```
-
-Приложение будет доступно по адресу: [http://localhost:8000](http://localhost:8000)
 
 ### 7. Документация API
 После запуска проекта API-документация доступна по адресам:
 - Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 - ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-## Тестирование
-Для запуска тестов используйте команду:
-```bash
-pytest
-```
 

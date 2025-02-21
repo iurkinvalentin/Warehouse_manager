@@ -7,11 +7,11 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.data.database import get_db
 from app.models.user import User
-from app.schemas.users import TokenData, UserInDB
+from app.schemas.users import TokenData, UserInDB, UserUpdate
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -111,6 +111,13 @@ def register_handler(user_data, db: Session):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Такое имя пользователя уже существует",
         )
+    existing_email = db.query(User).filter(
+        User.email == user_data.email).first()
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Такой email уже существует",
+        )
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         username=user_data.username, hashed_password=hashed_password)
@@ -120,20 +127,57 @@ def register_handler(user_data, db: Session):
     return new_user
 
 
-def update_user_handler(user_id: int, user_data, db: Session):
+def update_user_handler(user_id: int, user_data: UserUpdate, db: Session):
     """Обновление данных пользователя."""
     existing_user = db.query(User).filter(User.id == user_id).first()
     if not existing_user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-    for key, value in user_data.dict(exclude_unset=True).items():
-        if hasattr(existing_user, key):
-            setattr(existing_user, key, value)
-        else:
+    update_data = user_data.dict(exclude_unset=True)
+    if (
+        "username" in update_data
+        and update_data["username"] != existing_user.username
+    ):
+        username_exists = db.query(User).filter(
+            User.username == update_data["username"]).first()
+        if username_exists:
             raise HTTPException(
-                status_code=400, detail=f"Поле '{key}' не существует"
-                )
-    db.commit()
-    db.refresh(existing_user)
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Имя пользователя уже занято. Выберите другое."
+            )
+    if "email" in update_data and update_data["email"] != existing_user.email:
+        email_exists = db.query(
+            User).filter(User.email == update_data["email"]).first()
+        if email_exists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Пользователь с таким email уже зарегистрирован."
+            )
+    if "password" in update_data:
+        update_data["hashed_password"] = get_password_hash(
+            update_data.pop("password")
+            )
+    try:
+        for key, value in update_data.items():
+            if hasattr(existing_user, key):
+                setattr(existing_user, key, value)
+            else:
+                raise HTTPException(
+                    status_code=400, detail=f"Поле '{key}' не существует"
+                    )
+        db.commit()
+        db.refresh(existing_user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Возможно, имя пользователя или email уже заняты."
+        )
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка базы данных: {str(e)}"
+        )
     return existing_user
 
 

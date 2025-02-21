@@ -17,7 +17,9 @@ def create_warehouse(warehouse_data: WarehouseCreate, db: Session):
     except IntegrityError:
         db.rollback()
         raise HTTPException(
-            status_code=400, detail="Склад с таким именем уже существует"
+            status_code=400, detail=(
+                "Склад с таким именем или адресом уже существует"
+                )
         )
     except SQLAlchemyError as e:
         db.rollback()

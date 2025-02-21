@@ -117,7 +117,7 @@ class AttributeCreate(BaseModel):
     """Создание характеристики"""
 
     name: str
-    value: Optional[str] = None
+    value: str
     product_id: int
 
     model_config = ConfigDict(from_attributes=True)

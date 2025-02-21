@@ -58,7 +58,10 @@ def test_create_warehouse_integrity_error(mock_db):
         create_warehouse(warehouse_data, mock_db)
 
     assert exc_info.value.status_code == 400
-    assert "Склад с таким именем уже существует" in exc_info.value.detail
+    assert (
+        "Склад с таким именем или адресом уже существует"
+        in exc_info.value.detail
+    )
     mock_db.rollback.assert_called_once()
 
 
