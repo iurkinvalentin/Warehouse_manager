@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.data.database import get_db
 from app.schemas.warehouse import (
-    CategoryCreate, CategoryResponse, CategoryUpdate)
+    CategoryCreate, CategoryResponse, CategoryUpdate
+    )
 from app.services import category_service
 from app.services.user_service import get_current_user
 

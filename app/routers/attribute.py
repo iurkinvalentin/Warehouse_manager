@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.data.database import get_db
 from app.schemas.warehouse import (
-    AttributeCreate, AttributeResponse, AttributeUpdate)
+    AttributeCreate, AttributeResponse, AttributeUpdate
+    )
 from app.services import attribute_service
 from app.services.user_service import get_current_user
 
