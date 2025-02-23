@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from app.data.database import get_db
 from app.schemas.users import (
-    Token, UserCreate, UserInDB, UserRead, UserResponse, UserUpdate)
+    Token, UserCreate, UserInDB, UserResponse, UserUpdate
+    )
 from app.services import user_service
 
 
@@ -38,7 +39,7 @@ async def login_for_access_token(
 
 @router.get("/users/me", response_model=UserResponse)
 async def read_users_me(
-    current_user: UserRead = Depends(user_service.get_current_user),
+    current_user: UserResponse = Depends(user_service.get_current_user),
 ):
     return current_user
 

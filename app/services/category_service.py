@@ -9,7 +9,6 @@ from app.schemas.warehouse import CategoryCreate, CategoryUpdate
 def create_category(category_data: CategoryCreate, db: Session):
     """Создание новой категории с проверкой на дубликат"""
     try:
-        # Проверяем, существует ли уже такая категория
         existing_category = (
             db.query(Category).filter_by(name=category_data.name).first()
         )
@@ -18,8 +17,6 @@ def create_category(category_data: CategoryCreate, db: Session):
                 status_code=400,
                 detail="Категория с таким именем уже существует"
             )
-
-        # Создаём новую категорию
         db_category = Category(**category_data.dict())
         db.add(db_category)
         db.commit()

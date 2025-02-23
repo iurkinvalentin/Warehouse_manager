@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class Token(BaseModel):
@@ -21,7 +21,7 @@ class UserCreate(BaseModel):
 
     username: str
     password: str
-    email: str
+    email: EmailStr
 
 
 class UserUpdate(BaseModel):
@@ -31,7 +31,7 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     age: Optional[int] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     password: Optional[str] = None
 
@@ -39,6 +39,7 @@ class UserUpdate(BaseModel):
 
 
 class UserResponse(BaseModel):
+    """Ответ API о складе"""
     id: int
     username: str
     first_name: Optional[str] = None
@@ -50,21 +51,7 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserRead(BaseModel):
-    """Ответ API о пользователе (вся информация)"""
-
-    id: int
-    username: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    age: Optional[int] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserInDB(UserRead):
+class UserInDB(UserResponse):
     """Пользователь в БД (с `hashed_password`)"""
 
     hashed_password: str

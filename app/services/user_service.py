@@ -11,7 +11,9 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.data.database import get_db
 from app.models.user import User
-from app.schemas.users import TokenData, UserInDB, UserUpdate
+from app.schemas.users import (
+    TokenData, UserInDB, UserUpdate, UserResponse
+)
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -59,6 +61,22 @@ def get_user(db: Session, username: str) -> Optional[UserInDB]:
     return None
 
 
+def get_user_for_api(db: Session, username: str) -> Optional[UserResponse]:
+    """Получение пользователя для API без hashed_password"""
+    user = db.query(User).filter(User.username == username).first()
+    if user:
+        return UserResponse(
+            id=user.id,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            age=user.age,
+            email=user.email,
+            phone=user.phone
+        )
+    return None
+
+
 def authenticate_user(db: Session, username: str, password: str):
     """Аутентификация пользователя."""
     user = get_user(db, username)
@@ -96,7 +114,7 @@ async def get_current_user(
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = get_user(db, username=token_data.username)
+    user = get_user_for_api(db, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -120,7 +138,10 @@ def register_handler(user_data, db: Session):
         )
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
-        username=user_data.username, hashed_password=hashed_password)
+        username=user_data.username,
+        email=user_data.email,
+        hashed_password=hashed_password
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
