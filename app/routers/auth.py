@@ -59,7 +59,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return user_service.register_handler(user_data, db)
 
 
-@router.patch("/users/{user_id}")
+@router.patch("/users/{user_id}", response_model=UserResponse)
 def patch_user(user_id: int, user_data: UserUpdate,
                db: Session = Depends(get_db),
                current_user: UserInDB = Depends(
